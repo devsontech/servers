@@ -1,0 +1,11 @@
+{
+  "mcp.servers": {
+    "memory-enhanced": {
+      "command": "node",
+      "args": ["C:\\Users\\Devson\\Source\\Repos\\servers\\src\\memory\\dist\\index.js"],
+      "env": {
+        "MEMORY_FILE_PATH": "C:\\Users\\Devson\\memory.json"
+      }
+    }
+  }
+}
