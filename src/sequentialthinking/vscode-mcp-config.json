@@ -1,0 +1,18 @@
+{
+  "description": "MCP Configuration for Sequential Thinking with LSP",
+  "servers": {
+    "sequential-thinking-lsp": {
+      "command": "node",
+      "args": [
+        "C:\\Users\\Devson\\Source\\Repos\\servers\\src\\sequentialthinking\\dist\\lsp-enhanced-index.js"
+      ],
+      "env": {
+        "DISABLE_THOUGHT_LOGGING": "false",
+        "DEBUG": "false",
+        "LOG_LEVEL": "info"
+      },
+      "description": "Sequential thinking with LSP integration for intelligent code analysis",
+      "timeout": 30000
+    }
+  }
+}

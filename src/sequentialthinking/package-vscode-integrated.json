@@ -1,0 +1,64 @@
+{
+  "name": "@mcp/sequential-thinking-vscode",
+  "version": "2.0.0",
+  "description": "Sequential Thinking MCP Server with VS Code Language Server Integration",
+  "main": "dist/vscode-integrated-index.js",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "build:integrated": "tsc vscode-integrated-index.ts --target es2020 --module commonjs --outDir dist --moduleResolution node && tsc vscode-lsp-integration.ts --target es2020 --module commonjs --outDir dist --moduleResolution node",
+    "dev": "node --loader ts-node/esm vscode-integrated-index.ts",
+    "start": "node dist/vscode-integrated-index.js"
+  },
+  "keywords": ["mcp", "sequential-thinking", "vscode", "lsp", "dotnet", "angular", "copilot"],
+  "author": "DevsonTech",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^0.4.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0",
+    "ts-node": "^10.9.0"
+  },
+  "peerDependencies": {
+    "@angular/language-server": "*",
+    "typescript-language-server": "*",
+    "vscode-css-language-server": "*",
+    "vscode-html-language-server": "*",
+    "vscode-json-language-server": "*",
+    "yaml-language-server": "*"
+  },
+  "peerDependenciesMeta": {
+    "@angular/language-server": {
+      "optional": true
+    },
+    "typescript-language-server": {
+      "optional": true
+    },
+    "vscode-css-language-server": {
+      "optional": true
+    },
+    "vscode-html-language-server": {
+      "optional": true
+    },
+    "vscode-json-language-server": {
+      "optional": true
+    },
+    "yaml-language-server": {
+      "optional": true
+    }
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/devsontech/servers"
+  },
+  "files": [
+    "dist/",
+    "README.md",
+    "VSCODE_SETUP_INTEGRATED.md"
+  ]
+}

@@ -1,0 +1,54 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Build Sequential Thinking LSP Server",
+            "type": "shell",
+            "command": "npm",
+            "args": ["run", "build:lsp"],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "options": {
+                "cwd": "${workspaceFolder}/src/sequentialthinking"
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Install Dependencies",
+            "type": "shell", 
+            "command": "npm",
+            "args": ["install"],
+            "options": {
+                "cwd": "${workspaceFolder}/src/sequentialthinking"
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always"
+            }
+        },
+        {
+            "label": "Watch Build LSP Server",
+            "type": "shell",
+            "command": "npm",
+            "args": ["run", "watch:lsp"],
+            "options": {
+                "cwd": "${workspaceFolder}/src/sequentialthinking"
+            },
+            "isBackground": true,
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "panel": "new"
+            },
+            "problemMatcher": []
+        }
+    ]
+}

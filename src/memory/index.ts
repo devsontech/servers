@@ -402,6 +402,117 @@ class KnowledgeGraphManager {
     const relationTypes = Array.from(new Set(graph.relations.map(r => r.relationType))).sort();
     return { entityTypes, relationTypes };
   }
+
+  // Get all available tags used across all entities
+  async getAvailableTags(): Promise<{ tags: string[]; tagCounts: Record<string, number> }> {
+    const graph = await this.loadGraph();
+    const tagCounts: Record<string, number> = {};
+    
+    graph.entities.forEach(entity => {
+      const entityTags = this.extractTagsFromEntity(entity);
+      entityTags.forEach(tag => {
+        tagCounts[tag] = (tagCounts[tag] || 0) + 1;
+      });
+    });
+    
+    const tags = Object.keys(tagCounts).sort();
+    return { tags, tagCounts };
+  }
+
+  // Get all available metadata keys used across all entities
+  async getAvailableMetadataKeys(): Promise<{ 
+    metadataKeys: string[]; 
+    keyCounts: Record<string, number>;
+    keyExamples: Record<string, any[]>;
+  }> {
+    const graph = await this.loadGraph();
+    const keyCounts: Record<string, number> = {};
+    const keyExamples: Record<string, any[]> = {};
+    
+    graph.entities.forEach(entity => {
+      if (entity.metadata) {
+        this.extractMetadataKeys(entity.metadata).forEach(({ key, value }) => {
+          keyCounts[key] = (keyCounts[key] || 0) + 1;
+          
+          // Store unique examples for each key
+          if (!keyExamples[key]) {
+            keyExamples[key] = [];
+          }
+          if (keyExamples[key].length < 3 && !keyExamples[key].includes(value)) {
+            keyExamples[key].push(value);
+          }
+        });
+      }
+    });
+    
+    const metadataKeys = Object.keys(keyCounts).sort();
+    return { metadataKeys, keyCounts, keyExamples };
+  }
+
+  // Helper method to recursively extract all metadata keys and their values
+  private extractMetadataKeys(metadata: any, prefix = ''): Array<{ key: string; value: any }> {
+    const keys: Array<{ key: string; value: any }> = [];
+    
+    if (typeof metadata === 'object' && metadata !== null && !Array.isArray(metadata)) {
+      Object.entries(metadata).forEach(([key, value]) => {
+        const fullKey = prefix ? `${prefix}.${key}` : key;
+        
+        if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+          // Recursively extract nested object keys
+          keys.push(...this.extractMetadataKeys(value, fullKey));
+        } else {
+          // Store the key and a sample value
+          keys.push({ key: fullKey, value: Array.isArray(value) ? value[0] : value });
+        }
+      });
+    }
+    
+    return keys;
+  }
+
+  // Get comprehensive memory statistics
+  async getMemoryStats(): Promise<{
+    totalEntities: number;
+    totalRelations: number;
+    totalTags: number;
+    totalMetadataKeys: number;
+    entityTypeBreakdown: Record<string, number>;
+    relationTypeBreakdown: Record<string, number>;
+    averageObservationsPerEntity: number;
+    entitiesWithMetadata: number;
+  }> {
+    const graph = await this.loadGraph();
+    const { tags } = await this.getAvailableTags();
+    const { metadataKeys } = await this.getAvailableMetadataKeys();
+    
+    const entityTypeBreakdown: Record<string, number> = {};
+    const relationTypeBreakdown: Record<string, number> = {};
+    let totalObservations = 0;
+    let entitiesWithMetadata = 0;
+    
+    graph.entities.forEach(entity => {
+      entityTypeBreakdown[entity.entityType] = (entityTypeBreakdown[entity.entityType] || 0) + 1;
+      totalObservations += entity.observations.length;
+      if (entity.metadata && Object.keys(entity.metadata).length > 0) {
+        entitiesWithMetadata++;
+      }
+    });
+    
+    graph.relations.forEach(relation => {
+      relationTypeBreakdown[relation.relationType] = (relationTypeBreakdown[relation.relationType] || 0) + 1;
+    });
+    
+    return {
+      totalEntities: graph.entities.length,
+      totalRelations: graph.relations.length,
+      totalTags: tags.length,
+      totalMetadataKeys: metadataKeys.length,
+      entityTypeBreakdown,
+      relationTypeBreakdown,
+      averageObservationsPerEntity: graph.entities.length > 0 ? totalObservations / graph.entities.length : 0,
+      entitiesWithMetadata
+    };
+  }
 }
 
 const knowledgeGraphManager = new KnowledgeGraphManager();
@@ -657,6 +768,30 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           properties: {},
         },
       },
+      {
+        name: "get_available_tags",
+        description: "Get all tags currently used across all entities with usage counts",
+        inputSchema: {
+          type: "object",
+          properties: {},
+        },
+      },
+      {
+        name: "get_available_metadata_keys", 
+        description: "Get all metadata keys currently used across all entities with usage counts and examples",
+        inputSchema: {
+          type: "object",
+          properties: {},
+        },
+      },
+      {
+        name: "get_memory_stats",
+        description: "Get comprehensive statistics about the memory including entity counts, tag usage, and metadata analytics",
+        inputSchema: {
+          type: "object", 
+          properties: {},
+        },
+      },
     ],
   };
 });
@@ -666,6 +801,20 @@ server.setRequestHandler(CallToolRequestSchema, async (request: any) => {
 
   if (name === "read_graph") {
     return { content: [{ type: "text", text: JSON.stringify(await knowledgeGraphManager.readGraph(), null, 2) }] };
+  }
+
+  // Check for tools that don't require arguments
+  if (['list_types', 'get_available_tags', 'get_available_metadata_keys', 'get_memory_stats'].includes(name)) {
+    switch (name) {
+      case "list_types":
+        return { content: [{ type: "text", text: JSON.stringify(await knowledgeGraphManager.listTypes(), null, 2) }] };
+      case "get_available_tags":
+        return { content: [{ type: "text", text: JSON.stringify(await knowledgeGraphManager.getAvailableTags(), null, 2) }] };
+      case "get_available_metadata_keys":
+        return { content: [{ type: "text", text: JSON.stringify(await knowledgeGraphManager.getAvailableMetadataKeys(), null, 2) }] };
+      case "get_memory_stats":
+        return { content: [{ type: "text", text: JSON.stringify(await knowledgeGraphManager.getMemoryStats(), null, 2) }] };
+    }
   }
 
   if (!args) {
@@ -696,8 +845,6 @@ server.setRequestHandler(CallToolRequestSchema, async (request: any) => {
       return { content: [{ type: "text", text: JSON.stringify(await knowledgeGraphManager.searchByTags(args as { requiredTags?: string[]; optionalTags?: string[]; excludeTags?: string[]; mode?: 'AND' | 'OR' }), null, 2) }] };
     case "update_entity_metadata":
       return { content: [{ type: "text", text: JSON.stringify(await knowledgeGraphManager.updateEntityMetadata(args.updates as { entityName: string; metadata: Record<string, any> }[]), null, 2) }] };
-    case "list_types":
-      return { content: [{ type: "text", text: JSON.stringify(await knowledgeGraphManager.listTypes(), null, 2) }] };
     default:
       throw new Error(`Unknown tool: ${name}`);
   }
