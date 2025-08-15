@@ -1,0 +1,23 @@
+{
+  "mcpServers": {
+    "solution-reference-discovery": {
+      "command": "node",
+      "args": [
+        "c:/Users/Devson/Source/Repos/servers/src/sequentialthinking/dist/solution-reference-discovery.js"
+      ],
+      "env": {
+        "NODE_ENV": "production"
+      }
+    },
+    "vscode-integrated-thinking": {
+      "command": "node", 
+      "args": [
+        "c:/Users/Devson/Source/Repos/servers/src/sequentialthinking/dist/vscode-integrated-index.js"
+      ],
+      "env": {
+        "NODE_ENV": "production",
+        "VSCODE_WORKSPACE": "${workspaceFolder}"
+      }
+    }
+  }
+}

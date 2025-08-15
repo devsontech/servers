@@ -1,0 +1,23 @@
+{
+  "name": "solution-reference-discovery",
+  "version": "1.0.0",
+  "type": "module",
+  "description": ".NET Solution Reference Discovery MCP Server",
+  "main": "dist/solution-reference-discovery.js",
+  "scripts": {
+    "build": "tsc solution-reference-discovery.ts --outDir dist --target ES2022 --module ESNext --moduleResolution bundler --allowSyntheticDefaultImports",
+    "start": "node dist/solution-reference-discovery.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^0.6.0"
+  },
+  "keywords": [
+    "mcp",
+    "dotnet",
+    "solution",
+    "references",
+    "analysis"
+  ],
+  "author": "Devson",
+  "license": "MIT"
+}
