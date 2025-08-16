@@ -1,0 +1,19 @@
+{
+  "mcpServers": {
+    "solution-reference-discovery": {
+      "command": "node",
+      "args": ["solution-reference-discovery.js"],
+      "cwd": "c:\\Users\\Devson\\Source\\Repos\\servers\\src\\sequentialthinking"
+    },
+    "multi-root-workspace": {
+      "command": "node", 
+      "args": ["multi-root-workspace-clean.js"],
+      "cwd": "c:\\Users\\Devson\\Source\\Repos\\servers\\src\\sequentialthinking"
+    },
+    "vscode-integrated-thinking": {
+      "command": "node",
+      "args": ["vscode-lsp-integration.js"], 
+      "cwd": "c:\\Users\\Devson\\Source\\Repos\\servers\\src\\sequentialthinking"
+    }
+  }
+}

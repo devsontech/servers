@@ -420,7 +420,7 @@ class SolutionReferenceDiscovery {
       result.push(project);
     };
     
-    for (const project of dependencyGraph.keys()) {
+    for (const project of Array.from(dependencyGraph.keys())) {
       visit(project);
     }
     
@@ -490,6 +490,97 @@ class SolutionReferenceDiscovery {
   }
 
   /**
+   * Build filtered response based on include and project filters
+   */
+  buildFilteredResponse(analysis: SolutionAnalysis, include?: string[], projectFilter?: string[]): any {
+    const result: any = {};
+    
+    // If no include filter specified, include everything
+    const includeAll = !include || include.length === 0;
+    const shouldInclude = (section: string) => includeAll || include.includes(section);
+    
+    // Filter projects if projectFilter is specified
+    const getFilteredProjects = () => {
+      if (!projectFilter || projectFilter.length === 0) {
+        return analysis.projects;
+      }
+      return analysis.projects.filter(p => projectFilter.includes(p.projectName));
+    };
+    
+    // Filter source files if projectFilter is specified
+    const getFilteredSourceFiles = () => {
+      if (!projectFilter || projectFilter.length === 0) {
+        return analysis.allSourceFiles;
+      }
+      const filteredProjects = getFilteredProjects();
+      return filteredProjects.flatMap(p => p.sourceFiles);
+    };
+    
+    if (shouldInclude('summary')) {
+      result.summary = {
+        solution: analysis.solutionName,
+        projectCount: analysis.projects.length,
+        totalSourceFiles: analysis.allSourceFiles.length,
+        buildOrder: analysis.buildOrder
+      };
+    }
+    
+    if (shouldInclude('projects')) {
+      const filteredProjects = getFilteredProjects();
+      result.projects = filteredProjects.map(p => ({
+        name: p.projectName,
+        type: p.projectType,
+        framework: p.targetFramework,
+        sourceFiles: p.sourceFiles.length,
+        packageReferences: p.packageReferences.length,
+        projectReferences: p.projectReferences.length
+      }));
+    }
+    
+    if (shouldInclude('dependencyGraph')) {
+      let dependencyGraph = analysis.dependencyGraph;
+      
+      // Filter dependency graph if projectFilter is specified
+      if (projectFilter && projectFilter.length > 0) {
+        dependencyGraph = new Map();
+        for (const [project, deps] of Array.from(analysis.dependencyGraph.entries())) {
+          if (projectFilter.includes(project)) {
+            dependencyGraph.set(project, deps);
+          }
+        }
+      }
+      
+      result.dependencyGraph = Object.fromEntries(dependencyGraph);
+    }
+    
+    if (shouldInclude('packageDependencies')) {
+      let packageDependencies = analysis.packageDependencies;
+      
+      // Filter package dependencies if projectFilter is specified
+      if (projectFilter && projectFilter.length > 0) {
+        packageDependencies = new Map();
+        for (const [project, packages] of Array.from(analysis.packageDependencies.entries())) {
+          if (projectFilter.includes(project)) {
+            packageDependencies.set(project, packages);
+          }
+        }
+      }
+      
+      result.packageDependencies = Object.fromEntries(packageDependencies);
+    }
+    
+    if (shouldInclude('allSourceFiles')) {
+      result.allSourceFiles = getFilteredSourceFiles();
+    }
+    
+    if (shouldInclude('detailedProjects')) {
+      result.detailedProjects = getFilteredProjects();
+    }
+    
+    return result;
+  }
+
+  /**
    * Use dotnet CLI for advanced analysis
    */
   async getDotnetInfo(solutionPath: string): Promise<any> {
@@ -550,9 +641,31 @@ Perfect for:
 - Migration planning (framework upgrades)
 - Security audit of package dependencies
 
-Example usage:
+FILTERING OPTIONS:
+Use the 'include' parameter to specify which sections you need:
+- summary: Basic solution info (name, project count, file count, build order)
+- projects: Project overview (name, type, framework, counts)
+- dependencyGraph: Project-to-project dependencies
+- packageDependencies: NuGet package dependencies per project
+- allSourceFiles: Complete list of source files
+- detailedProjects: Full project details including file lists and references
+
+Use 'projectFilter' to limit results to specific projects by name.
+
+Examples:
 {
-  "solutionPath": "C:\\MyProject\\MyCompany.MyProduct.sln"
+  "solutionPath": "C:\\MyProject\\Solution.sln"
+}
+
+{
+  "solutionPath": "C:\\MyProject\\Solution.sln",
+  "include": ["summary", "projects"]
+}
+
+{
+  "solutionPath": "C:\\MyProject\\Solution.sln",
+  "include": ["detailedProjects"],
+  "projectFilter": ["MyProject.Core", "MyProject.Api"]
 }`,
         inputSchema: {
           type: 'object',
@@ -560,6 +673,21 @@ Example usage:
             solutionPath: {
               type: 'string',
               description: 'Absolute path to the .sln solution file'
+            },
+            include: {
+              type: 'array',
+              items: {
+                type: 'string',
+                enum: ['summary', 'projects', 'dependencyGraph', 'packageDependencies', 'allSourceFiles', 'detailedProjects']
+              },
+              description: 'Optional: Specify which sections to include in response. If not provided, all sections are included. Available options: summary, projects, dependencyGraph, packageDependencies, allSourceFiles, detailedProjects'
+            },
+            projectFilter: {
+              type: 'array',
+              items: {
+                type: 'string'
+              },
+              description: 'Optional: Filter results to specific project names. Only applies to projects, detailedProjects, and allSourceFiles sections'
             }
           },
           required: ['solutionPath']
@@ -613,33 +741,21 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     switch (name) {
       case 'analyze_solution':
         const solutionPath = args.solutionPath as string;
+        const include = args.include as string[] | undefined;
+        const projectFilter = args.projectFilter as string[] | undefined;
+        
         if (!solutionPath) {
           throw new McpError(ErrorCode.InvalidParams, 'solutionPath is required');
         }
+        
         const analysis = await discoveryTool.analyzeSolution(solutionPath);
+        const filteredResponse = discoveryTool.buildFilteredResponse(analysis, include, projectFilter);
+        
         return {
           content: [
             {
               type: 'text',
-              text: JSON.stringify({
-                summary: {
-                  solution: analysis.solutionName,
-                  projectCount: analysis.projects.length,
-                  totalSourceFiles: analysis.allSourceFiles.length,
-                  buildOrder: analysis.buildOrder
-                },
-                projects: analysis.projects.map(p => ({
-                  name: p.projectName,
-                  type: p.projectType,
-                  framework: p.targetFramework,
-                  sourceFiles: p.sourceFiles.length,
-                  packageReferences: p.packageReferences.length,
-                  projectReferences: p.projectReferences.length
-                })),
-                dependencyGraph: Object.fromEntries(analysis.dependencyGraph),
-                packageDependencies: Object.fromEntries(analysis.packageDependencies),
-                detailedProjects: analysis.projects
-              }, null, 2)
+              text: JSON.stringify(filteredResponse, null, 2)
             }
           ]
         };

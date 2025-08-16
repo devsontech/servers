@@ -9,6 +9,18 @@
         "NODE_ENV": "production"
       }
     },
+    "single-root-workspace-thinking": {
+      "command": "node", 
+      "args": [
+        "c:/Users/Devson/Source/Repos/servers/src/sequentialthinking/dist/vscode-integrated-index.js"
+      ],
+      "env": {
+        "NODE_ENV": "production",
+        "VSCODE_WORKSPACE": "${workspaceFolder}",
+        "VSCODE_WORKSPACE_NAME": "${workspaceFolderBasename}",
+        "ENABLE_SINGLE_ROOT": "true"
+      }
+    },
     "multi-root-workspace-thinking": {
       "command": "node", 
       "args": [
@@ -16,20 +28,6 @@
       ],
       "env": {
         "NODE_ENV": "production",
-        "VSCODE_WORKSPACE_FOLDERS": "${workspaceFolders}",
-        "VSCODE_WORKSPACE_FILE": "${workspaceFile}",
-        "ENABLE_MULTI_ROOT": "true"
-      }
-    },
-    "vscode-integrated-thinking": {
-      "command": "node", 
-      "args": [
-        "c:/Users/Devson/Source/Repos/servers/src/sequentialthinking/dist/vscode-integrated-index.js"
-      ],
-      "env": {
-        "NODE_ENV": "production",
-        "VSCODE_WORKSPACE_FOLDERS": "${workspaceFolders}",
-        "VSCODE_WORKSPACE_FILE": "${workspaceFile}",
         "ENABLE_MULTI_ROOT": "true"
       }
     }
