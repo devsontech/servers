@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "speckit": {
+      "command": "node",
+      "args": ["C:\\Users\\Devson\\Source\\Repos\\servers\\src\\speckit\\dist\\index.js"],
+      "env": {
+        "NODE_ENV": "production"
+      }
+    }
+  }
+}
